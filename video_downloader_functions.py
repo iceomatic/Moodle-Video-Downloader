@@ -1,9 +1,10 @@
-from bs4 import BeautifulSoup
+
 import requests
 from selenium import webdriver
 from selenium.webdriver.chrome.options import Options
 import os
 import time
+import json
 
 
 driver_path ="chromedriver.exe"
@@ -47,8 +48,8 @@ def site_login():
         browser.find_element_by_id("shibbolethbutton").click()
         time.sleep(0.5)
         #browser.find_element_by_xpath("/html/body/div[2]/div[2]/div/div/section/div/div[3]/div/div/div/div/div[1]/div/form").click()
-        username = browser.find_element_by_id("username")
-        password = browser.find_element_by_id("password")
+        username = browser.find_element_by_id( "username")
+        password = browser.find_element_by_id( "password")
         username.send_keys(username_input)
         password.send_keys(password_input)
         browser.find_element_by_id("login-button").click()
@@ -59,21 +60,33 @@ def site_login():
     if session_cookie['value'] != "":
         browser.delete_cookie("MoodleSession")
         browser.add_cookie(session_cookie)
-
-def video_sites():
-    video_url = "https://isis.tu-berlin.de/mod/videoservice/view.php/cm/1063983/video/58604/view"
-    browser.get(video_url)
+video_sites = []
+def video_site_fetch():
+    global video_sites
+    with open("videos_to_download.txt", "r") as f:
+        for link in f:
+            video_sites.append(link)
+    browser.get(video_sites[0])
     time.sleep(1)
 
 global video_src_unlocked
 def url_finder():
     global video_src_unlocked
-    video_src_locked = browser.find_element_by_tag_name("video").get_attribute("src")
-    browser.get(video_src_locked)
-    video_src_unlocked = browser.current_url
+    global video_sites
+    for link in video_sites:
+        browser.get(link)
+        time.sleep(0.2)
+        video_src_locked = browser.find_element_by_tag_name("video").get_attribute("src")
+        video_name = browser.find_element_by_class_name("video-view").find_element_by_tag_name("h3").text
+        browser.get(video_src_locked)
+        video_src_unlocked = browser.current_url
+        with open("names_and_links.txt", "a") as file:
+            vid_info = {video_name:video_src_unlocked}
+            file.write(json.dumps(vid_info)+"\n")
+        print(f"Video source url found and named: {video_name}")
     browser.quit()
-    print(f"Video source url acquired: {video_src_unlocked}")
-
+def directory_creation():
+    pass
 def video_downloader():
     file_name ="Test 1.mp4"
     r = requests.get(video_src_unlocked, stream= True)
@@ -86,6 +99,6 @@ def video_downloader():
 site_url()
 manual_cookie()
 site_login()
-video_sites()
+video_site_fetch()
 url_finder()
-video_downloader()
+#video_downloader()
