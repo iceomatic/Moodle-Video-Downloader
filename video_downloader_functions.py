@@ -41,7 +41,7 @@ def site_login():
     if session_cookie["value"] == "":
         ###Stand In Details
         username_input = "iceomatic"
-        password_input = ""
+        password_input = "Ic30ma71c7575!"
         ###
         print("Attempting to login with your details....")
         browser.find_element_by_class_name("eupopup-buttons").click()
